@@ -1,0 +1,303 @@
+{
+  "sigGen": [
+    {
+      "tgId": 1,
+      "tcId": 1,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 2,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 3,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 4,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 5,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 6,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 7,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 8,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 9,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 10,
+      "match": true
+    }
+  ],
+  "sigVer": [
+    {
+      "tgId": 1,
+      "tcId": 1,
+      "testPassed": true,
+      "ref": true,
+      "liboqs": "N/A (vector message is internal-API M')",
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 2,
+      "testPassed": false,
+      "ref": false,
+      "liboqs": "N/A (vector message is internal-API M')",
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 3,
+      "testPassed": false,
+      "ref": false,
+      "liboqs": "N/A (vector message is internal-API M')",
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 4,
+      "testPassed": false,
+      "ref": false,
+      "liboqs": "N/A (vector message is internal-API M')",
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 5,
+      "testPassed": true,
+      "ref": true,
+      "liboqs": "N/A (vector message is internal-API M')",
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 6,
+      "testPassed": false,
+      "ref": false,
+      "liboqs": "N/A (vector message is internal-API M')",
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 7,
+      "testPassed": false,
+      "ref": false,
+      "liboqs": "N/A (vector message is internal-API M')",
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 8,
+      "testPassed": false,
+      "ref": false,
+      "liboqs": "N/A (vector message is internal-API M')",
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 9,
+      "testPassed": false,
+      "ref": false,
+      "liboqs": "N/A (vector message is internal-API M')",
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 10,
+      "testPassed": false,
+      "ref": false,
+      "liboqs": "N/A (vector message is internal-API M')",
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 11,
+      "testPassed": true,
+      "ref": true,
+      "liboqs": "N/A (vector message is internal-API M')",
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 12,
+      "testPassed": false,
+      "ref": false,
+      "liboqs": "N/A (vector message is internal-API M')",
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 13,
+      "testPassed": false,
+      "ref": false,
+      "liboqs": "N/A (vector message is internal-API M')",
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 14,
+      "testPassed": false,
+      "ref": false,
+      "liboqs": "N/A (vector message is internal-API M')",
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 15,
+      "testPassed": false,
+      "ref": false,
+      "liboqs": "N/A (vector message is internal-API M')",
+      "match": true
+    }
+  ],
+  "keyGen": [
+    {
+      "tgId": 1,
+      "tcId": 1,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 2,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 3,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 4,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 5,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 6,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 7,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 8,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 9,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 10,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 11,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 12,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 13,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 14,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 15,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 16,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 17,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 18,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 19,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 20,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 21,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 22,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 23,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 24,
+      "match": true
+    },
+    {
+      "tgId": 1,
+      "tcId": 25,
+      "match": true
+    }
+  ]
+}

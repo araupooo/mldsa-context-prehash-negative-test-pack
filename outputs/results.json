@@ -1,0 +1,450 @@
+{
+  "fips204": {
+    "source": "https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.204.pdf",
+    "doi": "10.6028/NIST.FIPS.204",
+    "sha256": "57239b9f84c03227eda3ca0991204dc7764c79af9ce2e6824eda774918d46b6b"
+  },
+  "implementations": {
+    "liboqs": {
+      "name": "liboqs",
+      "version": "0.16.0",
+      "binding": "liboqs-python 0.16.0.2",
+      "algorithm": "ML-DSA-44",
+      "pk_bytes": 1312,
+      "sk_bytes": 2560,
+      "sig_bytes": 2420,
+      "context_api": "sign_with_ctx_str / verify_with_ctx_str",
+      "prehash_api": null
+    },
+    "dilithium_ref": {
+      "name": "pq-crystals/dilithium reference",
+      "commit": "d35ba3fe5449bee3e6d43e1f296c3ca818bd36be",
+      "algorithm": "ML-DSA-44 (DILITHIUM_MODE 2)",
+      "pk_bytes": 1312,
+      "sk_bytes": 2560,
+      "sig_bytes": 2420,
+      "context_api": "crypto_sign_signature / crypto_sign_verify (ctx parameter)",
+      "prehash_api": "crypto_sign_signature_internal / crypto_sign_verify_internal with pre = 0x01||len(ctx)||ctx||OID (FIPS 204 Alg. 4/5, section 6 testing interface)"
+    },
+    "cryptography_crosscheck": {
+      "name": "pyca/cryptography",
+      "version": "50.0.2",
+      "role": "independent cross-check only (H-10)",
+      "algorithm": "ML-DSA-44",
+      "context_api": "sign(data, context=...) / verify(signature, data, context=...)",
+      "prehash_api": "none native; sign_mu/verify_mu take a caller-computed mu"
+    }
+  },
+  "cases": [
+    {
+      "id": "NA-1",
+      "title": "liboqs exposes no HashML-DSA algorithm or prehash API",
+      "implementation": "liboqs 0.16.0",
+      "expected": "N/A",
+      "observed": "N/A",
+      "match": true,
+      "detail": "get_enabled_sig_mechanisms() lists no HashML-DSA name; Signature has no prehash method (only is_extmu=False)."
+    },
+    {
+      "id": "NA-2",
+      "title": "liboqs sign with 256-byte context fails",
+      "implementation": "liboqs 0.16.0",
+      "expected": "ERROR",
+      "observed": "ERROR",
+      "match": true,
+      "detail": "sign_with_ctx_str(msg, 256-byte ctx) raises RuntimeError 'Can not sign message with context string'."
+    },
+    {
+      "id": "NA-3",
+      "title": "liboqs verify with 256-byte context returns False",
+      "implementation": "liboqs 0.16.0",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": "verify_with_ctx_str(msg, sig, 256-byte ctx, pk) returns False (no exception); FIPS 204 Alg. 3 requires an error indication, and a boolean False is the binding's equivalent of it."
+    },
+    {
+      "id": "NA-4",
+      "title": "cryptography sign with 256-byte context fails",
+      "implementation": "cryptography 50.0.2 (cross-check only)",
+      "expected": "ERROR",
+      "observed": "ERROR",
+      "match": true,
+      "detail": "ValueError 'Context must be at most 255 bytes'."
+    },
+    {
+      "id": "NA-5",
+      "title": "cryptography exposes no native HashML-DSA API (only external-mu sign_mu/verify_mu)",
+      "implementation": "cryptography 50.0.2 (cross-check only)",
+      "expected": "N/A",
+      "observed": "N/A",
+      "match": true,
+      "detail": "sign_mu/verify_mu take a caller-computed mu; the caller must build M' per FIPS 204 Alg. 4/5 itself."
+    },
+    {
+      "id": "C-01",
+      "title": "valid agreement, empty ctx, liboqs self-verify",
+      "implementation": "liboqs 0.16.0",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": "sign_with_ctx_str 0.0003 s"
+    },
+    {
+      "id": "C-01b",
+      "title": "valid agreement, empty ctx, ref self-verify",
+      "implementation": "dilithium ref",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": "hedged sign 0.0039 s"
+    },
+    {
+      "id": "C-02",
+      "title": "valid agreement, ctx 'release-manifest-v1', liboqs",
+      "implementation": "liboqs 0.16.0",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-02b",
+      "title": "valid agreement, ctx 'release-manifest-v1', ref",
+      "implementation": "dilithium ref",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-03",
+      "title": "cross-verify: liboqs signature verified by ref (ctx)",
+      "implementation": "liboqs -> ref",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-03b",
+      "title": "cross-verify: ref signature verified by liboqs (ctx)",
+      "implementation": "ref -> liboqs",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-04",
+      "title": "255-byte context signs and verifies, liboqs",
+      "implementation": "liboqs 0.16.0",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-04b",
+      "title": "255-byte context signs and verifies, ref",
+      "implementation": "dilithium ref",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-05",
+      "title": "256-byte context on sign fails, ref",
+      "implementation": "dilithium ref",
+      "expected": "ERROR",
+      "observed": "ERROR",
+      "match": true,
+      "detail": "context too long: 256 bytes (max 255)"
+    },
+    {
+      "id": "C-06",
+      "title": "256-byte context on verify fails, ref",
+      "implementation": "dilithium ref",
+      "expected": "ERROR",
+      "observed": "ERROR",
+      "match": true,
+      "detail": "context too long: 256 bytes (max 255)"
+    },
+    {
+      "id": "C-07",
+      "title": "wrong context on verify rejected, liboqs",
+      "implementation": "liboqs 0.16.0",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-07b",
+      "title": "wrong context on verify rejected, ref",
+      "implementation": "dilithium ref",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-08",
+      "title": "altered signature (last byte flipped) rejected, liboqs",
+      "implementation": "liboqs 0.16.0",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-08b",
+      "title": "altered signature (last byte flipped) rejected, ref",
+      "implementation": "dilithium ref",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-09",
+      "title": "message mismatch rejected, liboqs",
+      "implementation": "liboqs 0.16.0",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-09b",
+      "title": "message mismatch rejected, ref",
+      "implementation": "dilithium ref",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-10",
+      "title": "empty message with context signs/verifies, liboqs",
+      "implementation": "liboqs 0.16.0",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-10b",
+      "title": "empty message with context signs/verifies, ref",
+      "implementation": "dilithium ref",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-11",
+      "title": "binary context with NUL bytes, liboqs",
+      "implementation": "liboqs 0.16.0",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-11b",
+      "title": "binary context with NUL bytes, ref",
+      "implementation": "dilithium ref",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-12",
+      "title": "1-byte context signs/verifies, liboqs",
+      "implementation": "liboqs 0.16.0",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-13",
+      "title": "signature verified under wrong key rejected, liboqs",
+      "implementation": "liboqs 0.16.0",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-13b",
+      "title": "signature verified under wrong key rejected, ref",
+      "implementation": "dilithium ref",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "C-14",
+      "title": "cross-verify with wrong context rejected (liboqs->ref)",
+      "implementation": "liboqs -> ref",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "H-01",
+      "title": "HashML-DSA SHA-256, empty ctx",
+      "implementation": "dilithium ref",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": "sign 0.0015 s; pre=13 B, PH(M)=32 B"
+    },
+    {
+      "id": "H-02",
+      "title": "HashML-DSA SHA-512, ctx 'release-manifest-v1'",
+      "implementation": "dilithium ref",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": "sign 0.0015 s; pre=32 B, PH(M)=64 B"
+    },
+    {
+      "id": "H-03",
+      "title": "HashML-DSA SHAKE128-256, ctx",
+      "implementation": "dilithium ref",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": "sign 0.0015 s; pre=32 B, PH(M)=32 B"
+    },
+    {
+      "id": "H-04",
+      "title": "prehash mismatch (sign SHA-256, verify SHA-512) rejected",
+      "implementation": "dilithium ref",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "H-05",
+      "title": "wrong OID (SHA-512 OID over SHA-256 digest) rejected",
+      "implementation": "dilithium ref",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "H-06",
+      "title": "HashML-DSA message mismatch rejected",
+      "implementation": "dilithium ref",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": "sign 0.0015 s; pre=32 B, PH(M)=32 B"
+    },
+    {
+      "id": "H-07",
+      "title": "HashML-DSA wrong context rejected",
+      "implementation": "dilithium ref",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "H-08",
+      "title": "256-byte context refused at HashML-DSA construction",
+      "implementation": "dilithium ref",
+      "expected": "ERROR",
+      "observed": "ERROR",
+      "match": true,
+      "detail": "context too long: 256 bytes (max 255) (FIPS 204 Alg. 4 lines 1-3; the ref internal API performs no length check itself -- it is the section 6 testing interface)."
+    },
+    {
+      "id": "H-09",
+      "title": "pure ML-DSA signature rejected as HashML-DSA",
+      "implementation": "dilithium ref",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "H-09b",
+      "title": "HashML-DSA signature rejected as pure ML-DSA",
+      "implementation": "dilithium ref",
+      "expected": "INVALID",
+      "observed": "INVALID",
+      "match": true,
+      "detail": ""
+    },
+    {
+      "id": "H-11",
+      "title": "HashML-DSA SHA-256 over 1 MiB message",
+      "implementation": "dilithium ref",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": "sign 0.0017 s; pre=32 B, PH(M)=32 B"
+    },
+    {
+      "id": "H-12",
+      "title": "HashML-DSA SHA-256 over empty message",
+      "implementation": "dilithium ref",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": "sign 0.0019 s; pre=13 B, PH(M)=32 B"
+    },
+    {
+      "id": "H-13",
+      "title": "malformed prefix (len byte 0, 256-byte ctx) is silently accepted by the internal API",
+      "implementation": "dilithium ref",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": "sign_internal/verify_internal perform no length check; the Alg. 4 check must live in the caller's wrapper (see H-08)."
+    },
+    {
+      "id": "H-10a",
+      "title": "ACVP keyGen vector: cryptography seed derives the vector public key",
+      "implementation": "cryptography 50.0.2 (cross-check only)",
+      "expected": "MATCH",
+      "observed": "MATCH",
+      "match": true,
+      "detail": "ACVP keyGen tgId 1 tcId 1; pk sha256 6995b20ecd5cde41"
+    },
+    {
+      "id": "H-10b",
+      "title": "ref HashML-DSA signature verifies via cryptography verify_mu (same mu)",
+      "implementation": "ref -> cryptography",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": "deterministic (rnd=0) ref signature over the ACVP keypair."
+    },
+    {
+      "id": "H-10c",
+      "title": "cryptography sign_mu signature verifies via ref verify_internal",
+      "implementation": "cryptography -> ref",
+      "expected": "VALID",
+      "observed": "VALID",
+      "match": true,
+      "detail": ""
+    }
+  ],
+  "counts": {
+    "total": 45,
+    "matched": 45,
+    "mismatches": []
+  }
+}

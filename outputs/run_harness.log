@@ -1,0 +1,90 @@
+== environment ==
+liboqs-python faulthandler is disabled
+python: 3.12.3
+liboqs-python: 0.16.0.2 (pip)
+cryptography: 50.0.2
+oqs mechanisms (ML-DSA): ['ML-DSA-44', 'ML-DSA-65', 'ML-DSA-87']
+oqs mechanisms (Hash): []
+dilithium ref commit: d35ba3fe5449bee3e6d43e1f296c3ca818bd36be
+FIPS-204.pdf sha256: 57239b9f84c03227eda3ca0991204dc7764c79af9ce2e6824eda774918d46b6b
+gcc: gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+== N/A probes ==
+liboqs details: {'name': 'ML-DSA-44', 'version': 'FIPS204', 'claimed_nist_level': 2, 'is_euf_cma': True, 'is_suf_cma': False, 'supports_context_signing': True, 'sig_with_ctx_support': True, 'is_extmu': False, 'length_public_key': 1312, 'length_secret_key': 2560, 'length_signature': 2420}
+liboqs prehash/mu methods: ['is_extmu']
+[NA-1] liboqs exposes no HashML-DSA algorithm or prehash API                    expected=N/A                          observed=N/A                          OK
+        get_enabled_sig_mechanisms() lists no HashML-DSA name; Signature has no prehash method (only is_extmu=False).
+liboqs keypair: pk 1312 B, sk 2560 B
+liboqs sign 256B ctx raised: RuntimeError Can not sign message with context string
+[NA-2] liboqs sign with 256-byte context fails                                  expected=ERROR                        observed=ERROR                        OK
+        sign_with_ctx_str(msg, 256-byte ctx) raises RuntimeError 'Can not sign message with context string'.
+[NA-3] liboqs verify with 256-byte context returns False                        expected=INVALID                      observed=INVALID                      OK
+        verify_with_ctx_str(msg, sig, 256-byte ctx, pk) returns False (no exception); FIPS 204 Alg. 3 requires an error indication, and a boolean False is the binding's equivalent of it.
+cryptography sign 256B ctx raised ValueError: Context must be at most 255 bytes
+[NA-4] cryptography sign with 256-byte context fails                            expected=ERROR                        observed=ERROR                        OK
+        ValueError 'Context must be at most 255 bytes'.
+cryptography ML-DSA methods: ['from_seed_bytes', 'generate', 'private_bytes', 'private_bytes_raw', 'public_key', 'sign', 'sign_mu']
+[NA-5] cryptography exposes no native HashML-DSA API (only external-mu sign_mu/verify_mu) expected=N/A                          observed=N/A                          OK
+        sign_mu/verify_mu take a caller-computed mu; the caller must build M' per FIPS 204 Alg. 4/5 itself.
+keypair: pk 1312 B, sk 2560 B
+ref keypair: pk 1312 B, sk 2560 B
+== pure ML-DSA / context-string cases ==
+[C-01] valid agreement, empty ctx, liboqs self-verify                           expected=VALID                        observed=VALID                        OK
+        sign_with_ctx_str 0.0003 s
+[C-01b] valid agreement, empty ctx, ref self-verify                              expected=VALID                        observed=VALID                        OK
+        hedged sign 0.0039 s
+[C-02] valid agreement, ctx 'release-manifest-v1', liboqs                       expected=VALID                        observed=VALID                        OK
+[C-02b] valid agreement, ctx 'release-manifest-v1', ref                          expected=VALID                        observed=VALID                        OK
+[C-03] cross-verify: liboqs signature verified by ref (ctx)                     expected=VALID                        observed=VALID                        OK
+[C-03b] cross-verify: ref signature verified by liboqs (ctx)                     expected=VALID                        observed=VALID                        OK
+[C-04] 255-byte context signs and verifies, liboqs                              expected=VALID                        observed=VALID                        OK
+[C-04b] 255-byte context signs and verifies, ref                                 expected=VALID                        observed=VALID                        OK
+[C-05] 256-byte context on sign fails, ref                                      expected=ERROR                        observed=ERROR                        OK
+        context too long: 256 bytes (max 255)
+[C-06] 256-byte context on verify fails, ref                                    expected=ERROR                        observed=ERROR                        OK
+        context too long: 256 bytes (max 255)
+[C-07] wrong context on verify rejected, liboqs                                 expected=INVALID                      observed=INVALID                      OK
+[C-07b] wrong context on verify rejected, ref                                    expected=INVALID                      observed=INVALID                      OK
+[C-08] altered signature (last byte flipped) rejected, liboqs                   expected=INVALID                      observed=INVALID                      OK
+[C-08b] altered signature (last byte flipped) rejected, ref                      expected=INVALID                      observed=INVALID                      OK
+[C-09] message mismatch rejected, liboqs                                        expected=INVALID                      observed=INVALID                      OK
+[C-09b] message mismatch rejected, ref                                           expected=INVALID                      observed=INVALID                      OK
+[C-10] empty message with context signs/verifies, liboqs                        expected=VALID                        observed=VALID                        OK
+[C-10b] empty message with context signs/verifies, ref                           expected=VALID                        observed=VALID                        OK
+[C-11] binary context with NUL bytes, liboqs                                    expected=VALID                        observed=VALID                        OK
+[C-11b] binary context with NUL bytes, ref                                       expected=VALID                        observed=VALID                        OK
+[C-12] 1-byte context signs/verifies, liboqs                                    expected=VALID                        observed=VALID                        OK
+[C-13] signature verified under wrong key rejected, liboqs                      expected=INVALID                      observed=INVALID                      OK
+[C-13b] signature verified under wrong key rejected, ref                         expected=INVALID                      observed=INVALID                      OK
+[C-14] cross-verify with wrong context rejected (liboqs->ref)                   expected=INVALID                      observed=INVALID                      OK
+== HashML-DSA prehash cases (dilithium ref) ==
+[H-01] HashML-DSA SHA-256, empty ctx                                            expected=VALID                        observed=VALID                        OK
+        sign 0.0015 s; pre=13 B, PH(M)=32 B
+[H-02] HashML-DSA SHA-512, ctx 'release-manifest-v1'                            expected=VALID                        observed=VALID                        OK
+        sign 0.0015 s; pre=32 B, PH(M)=64 B
+[H-03] HashML-DSA SHAKE128-256, ctx                                             expected=VALID                        observed=VALID                        OK
+        sign 0.0015 s; pre=32 B, PH(M)=32 B
+[H-04] prehash mismatch (sign SHA-256, verify SHA-512) rejected                 expected=INVALID                      observed=INVALID                      OK
+[H-05] wrong OID (SHA-512 OID over SHA-256 digest) rejected                     expected=INVALID                      observed=INVALID                      OK
+[H-06] HashML-DSA message mismatch rejected                                     expected=INVALID                      observed=INVALID                      OK
+        sign 0.0015 s; pre=32 B, PH(M)=32 B
+[H-07] HashML-DSA wrong context rejected                                        expected=INVALID                      observed=INVALID                      OK
+[H-08] 256-byte context refused at HashML-DSA construction                      expected=ERROR                        observed=ERROR                        OK
+        context too long: 256 bytes (max 255) (FIPS 204 Alg. 4 lines 1-3; the ref internal API performs no length check itself -- it is the section 6 testing interface).
+[H-09] pure ML-DSA signature rejected as HashML-DSA                             expected=INVALID                      observed=INVALID                      OK
+[H-09b] HashML-DSA signature rejected as pure ML-DSA                             expected=INVALID                      observed=INVALID                      OK
+[H-11] HashML-DSA SHA-256 over 1 MiB message                                    expected=VALID                        observed=VALID                        OK
+        sign 0.0017 s; pre=32 B, PH(M)=32 B
+[H-12] HashML-DSA SHA-256 over empty message                                    expected=VALID                        observed=VALID                        OK
+        sign 0.0019 s; pre=13 B, PH(M)=32 B
+[H-13] malformed prefix (len byte 0, 256-byte ctx) is silently accepted by the internal API expected=VALID                        observed=VALID                        OK
+        sign_internal/verify_internal perform no length check; the Alg. 4 check must live in the caller's wrapper (see H-08).
+== H-10 cross-check (cryptography sign_mu) ==
+[H-10a] ACVP keyGen vector: cryptography seed derives the vector public key      expected=MATCH                        observed=MATCH                        OK
+        ACVP keyGen tgId 1 tcId 1; pk sha256 6995b20ecd5cde41
+[H-10b] ref HashML-DSA signature verifies via cryptography verify_mu (same mu)   expected=VALID                        observed=VALID                        OK
+        deterministic (rnd=0) ref signature over the ACVP keypair.
+[H-10c] cryptography sign_mu signature verifies via ref verify_internal          expected=VALID                        observed=VALID                        OK
+== summary ==
+cases: 45, matched expected outcome: 45, mismatches: 0
+wrote outputs/results.json
+RESULT: OK

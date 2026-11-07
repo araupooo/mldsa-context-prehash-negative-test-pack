@@ -1,0 +1,52 @@
+sigGen tg1 tc1: MATCH
+sigGen tg1 tc2: MATCH
+sigGen tg1 tc3: MATCH
+sigGen tg1 tc4: MATCH
+sigGen tg1 tc5: MATCH
+sigGen tg1 tc6: MATCH
+sigGen tg1 tc7: MATCH
+sigGen tg1 tc8: MATCH
+sigGen tg1 tc9: MATCH
+sigGen tg1 tc10: MATCH
+sigVer tg1 tc1: expected=True ref=True MATCH
+sigVer tg1 tc2: expected=False ref=False MATCH
+sigVer tg1 tc3: expected=False ref=False MATCH
+sigVer tg1 tc4: expected=False ref=False MATCH
+sigVer tg1 tc5: expected=True ref=True MATCH
+sigVer tg1 tc6: expected=False ref=False MATCH
+sigVer tg1 tc7: expected=False ref=False MATCH
+sigVer tg1 tc8: expected=False ref=False MATCH
+sigVer tg1 tc9: expected=False ref=False MATCH
+sigVer tg1 tc10: expected=False ref=False MATCH
+sigVer tg1 tc11: expected=True ref=True MATCH
+sigVer tg1 tc12: expected=False ref=False MATCH
+sigVer tg1 tc13: expected=False ref=False MATCH
+sigVer tg1 tc14: expected=False ref=False MATCH
+sigVer tg1 tc15: expected=False ref=False MATCH
+keyGen tg1 tc1: MATCH
+keyGen tg1 tc2: MATCH
+keyGen tg1 tc3: MATCH
+keyGen tg1 tc4: MATCH
+keyGen tg1 tc5: MATCH
+keyGen tg1 tc6: MATCH
+keyGen tg1 tc7: MATCH
+keyGen tg1 tc8: MATCH
+keyGen tg1 tc9: MATCH
+keyGen tg1 tc10: MATCH
+keyGen tg1 tc11: MATCH
+keyGen tg1 tc12: MATCH
+keyGen tg1 tc13: MATCH
+keyGen tg1 tc14: MATCH
+keyGen tg1 tc15: MATCH
+keyGen tg1 tc16: MATCH
+keyGen tg1 tc17: MATCH
+keyGen tg1 tc18: MATCH
+keyGen tg1 tc19: MATCH
+keyGen tg1 tc20: MATCH
+keyGen tg1 tc21: MATCH
+keyGen tg1 tc22: MATCH
+keyGen tg1 tc23: MATCH
+keyGen tg1 tc24: MATCH
+keyGen tg1 tc25: MATCH
+KAT vectors checked: 50, failures: 0
+RESULT: OK
