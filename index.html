@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ML-DSA Context and Prehash Negative-Test Pack</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:1000px;margin:2em auto;
+padding:0 1em;line-height:1.5;color:#111}
+table{border-collapse:collapse;width:100%;margin:1em 0}
+th,td{border:1px solid #999;padding:4px 8px;text-align:left;font-size:14px}
+th{background:#eee}
+code{background:#f2f2f2;padding:0 3px}
+h1{font-size:24px}h2{font-size:19px;margin-top:1.5em}
+.good{color:#0a6b0a}.bad{color:#a00}
+</style>
+</head>
+<body>
+<h1>ML-DSA Context-String and HashML-DSA Prehash Negative-Test Pack</h1>
+<p>Reusable evidence pack checking ML-DSA context-string and HashML-DSA
+handling in two pinned ML-DSA-44 implementations against FIPS 204
+(DOI 10.6028/NIST.FIPS.204).</p>
+
+<h2>Headline results</h2>
+<ul>
+<li><strong>Harness cases: 45, matched expected outcome: 45, mismatches: 0.</strong></li>
+<li>Valid-agreement cases: 21 VALID as expected; negative/error cases: 21 rejected or failed as expected; N/A probes: 2.</li>
+<li>Context handling is fully conformant in both implementations: cross-verification liboqs &harr; dilithium reference is VALID in both directions with a non-empty context, and every wrong-context, overlong-context, altered-signature, message-mismatch and wrong-key negative is rejected.</li>
+<li>HashML-DSA works in the dilithium reference for SHA-256, SHA-512 and SHAKE128-256, and its construction is independently confirmed by pyca/cryptography sign_mu/verify_mu (H-10, both directions VALID).</li>
+<li>liboqs 0.16.0 exposes <strong>no HashML-DSA API</strong> (N/A, NA-1): prehash signing is unavailable there, not merely untested.</li>
+<li>ACVP known-answer vectors: sigGen 10/10, sigVer 15/15, keyGen 25/25 (50/50).</li>
+</ul>
+
+<h2>Implementations (pinned)</h2>
+<table>
+<tr><th></th><th>Implementation A</th><th>Implementation B</th><th>Cross-check only</th></tr>
+<tr><td>Name</td><td>liboqs 0.16.0 via liboqs-python 0.16.0.2</td><td>pq-crystals/dilithium reference</td><td>pyca/cryptography 50.0.2</td></tr>
+<tr><td>Version / commit</td><td>0.16.0</td><td><code>d35ba3fe5449bee3e6d43e1f296c3ca818bd36be</code></td><td>50.0.2</td></tr>
+<tr><td>Algorithm</td><td>ML-DSA-44</td><td>ML-DSA-44 (DILITHIUM_MODE 2)</td><td>ML-DSA-44</td></tr>
+<tr><td>pk / sk / sig bytes</td><td>1312 / 2560 / 2420</td><td>1312 / 2560 / 2420</td><td>1312 / 2560 / 2420</td></tr>
+<tr><td>Context API</td><td>sign_with_ctx_str / verify_with_ctx_str</td><td>crypto_sign_signature / crypto_sign_verify (ctx parameter)</td><td>sign(data, context=...) / verify(..., context=...)</td></tr>
+<tr><td>Prehash API</td><td><strong>none (N/A)</strong></td><td>crypto_sign_signature_internal / verify_internal with pre = 0x01 || len(ctx) || ctx || OID (FIPS 204 Alg. 4/5, section 6 testing interface)</td><td>none native; sign_mu/verify_mu take a caller-computed mu</td></tr>
+</table>
+
+<h2>Case matrix (all 45 cases)</h2>
+<table>
+<tr><th>ID</th><th>Case</th><th>Implementation</th><th>Expected</th><th>Observed</th><th>Match</th></tr>
+<tr><td>NA-1</td><td>liboqs exposes no HashML-DSA algorithm or prehash API</td><td>liboqs 0.16.0</td><td>N/A</td><td>N/A</td><td>match</td></tr>
+<tr><td>NA-2</td><td>liboqs sign with 256-byte context fails</td><td>liboqs 0.16.0</td><td>ERROR</td><td>ERROR</td><td>match</td></tr>
+<tr><td>NA-3</td><td>liboqs verify with 256-byte context returns False</td><td>liboqs 0.16.0</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>NA-4</td><td>cryptography sign with 256-byte context fails</td><td>cryptography 50.0.2 (cross-check only)</td><td>ERROR</td><td>ERROR</td><td>match</td></tr>
+<tr><td>NA-5</td><td>cryptography exposes no native HashML-DSA API (only external-mu sign_mu/verify_mu)</td><td>cryptography 50.0.2 (cross-check only)</td><td>N/A</td><td>N/A</td><td>match</td></tr>
+<tr><td>C-01</td><td>valid agreement, empty ctx, liboqs self-verify</td><td>liboqs 0.16.0</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>C-01b</td><td>valid agreement, empty ctx, ref self-verify</td><td>dilithium ref</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>C-02</td><td>valid agreement, ctx &#x27;release-manifest-v1&#x27;, liboqs</td><td>liboqs 0.16.0</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>C-02b</td><td>valid agreement, ctx &#x27;release-manifest-v1&#x27;, ref</td><td>dilithium ref</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>C-03</td><td>cross-verify: liboqs signature verified by ref (ctx)</td><td>liboqs -&gt; ref</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>C-03b</td><td>cross-verify: ref signature verified by liboqs (ctx)</td><td>ref -&gt; liboqs</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>C-04</td><td>255-byte context signs and verifies, liboqs</td><td>liboqs 0.16.0</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>C-04b</td><td>255-byte context signs and verifies, ref</td><td>dilithium ref</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>C-05</td><td>256-byte context on sign fails, ref</td><td>dilithium ref</td><td>ERROR</td><td>ERROR</td><td>match</td></tr>
+<tr><td>C-06</td><td>256-byte context on verify fails, ref</td><td>dilithium ref</td><td>ERROR</td><td>ERROR</td><td>match</td></tr>
+<tr><td>C-07</td><td>wrong context on verify rejected, liboqs</td><td>liboqs 0.16.0</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>C-07b</td><td>wrong context on verify rejected, ref</td><td>dilithium ref</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>C-08</td><td>altered signature (last byte flipped) rejected, liboqs</td><td>liboqs 0.16.0</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>C-08b</td><td>altered signature (last byte flipped) rejected, ref</td><td>dilithium ref</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>C-09</td><td>message mismatch rejected, liboqs</td><td>liboqs 0.16.0</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>C-09b</td><td>message mismatch rejected, ref</td><td>dilithium ref</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>C-10</td><td>empty message with context signs/verifies, liboqs</td><td>liboqs 0.16.0</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>C-10b</td><td>empty message with context signs/verifies, ref</td><td>dilithium ref</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>C-11</td><td>binary context with NUL bytes, liboqs</td><td>liboqs 0.16.0</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>C-11b</td><td>binary context with NUL bytes, ref</td><td>dilithium ref</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>C-12</td><td>1-byte context signs/verifies, liboqs</td><td>liboqs 0.16.0</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>C-13</td><td>signature verified under wrong key rejected, liboqs</td><td>liboqs 0.16.0</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>C-13b</td><td>signature verified under wrong key rejected, ref</td><td>dilithium ref</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>C-14</td><td>cross-verify with wrong context rejected (liboqs-&gt;ref)</td><td>liboqs -&gt; ref</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>H-01</td><td>HashML-DSA SHA-256, empty ctx</td><td>dilithium ref</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>H-02</td><td>HashML-DSA SHA-512, ctx &#x27;release-manifest-v1&#x27;</td><td>dilithium ref</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>H-03</td><td>HashML-DSA SHAKE128-256, ctx</td><td>dilithium ref</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>H-04</td><td>prehash mismatch (sign SHA-256, verify SHA-512) rejected</td><td>dilithium ref</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>H-05</td><td>wrong OID (SHA-512 OID over SHA-256 digest) rejected</td><td>dilithium ref</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>H-06</td><td>HashML-DSA message mismatch rejected</td><td>dilithium ref</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>H-07</td><td>HashML-DSA wrong context rejected</td><td>dilithium ref</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>H-08</td><td>256-byte context refused at HashML-DSA construction</td><td>dilithium ref</td><td>ERROR</td><td>ERROR</td><td>match</td></tr>
+<tr><td>H-09</td><td>pure ML-DSA signature rejected as HashML-DSA</td><td>dilithium ref</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>H-09b</td><td>HashML-DSA signature rejected as pure ML-DSA</td><td>dilithium ref</td><td>INVALID</td><td>INVALID</td><td>match</td></tr>
+<tr><td>H-11</td><td>HashML-DSA SHA-256 over 1 MiB message</td><td>dilithium ref</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>H-12</td><td>HashML-DSA SHA-256 over empty message</td><td>dilithium ref</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>H-13</td><td>malformed prefix (len byte 0, 256-byte ctx) is silently accepted by the internal API</td><td>dilithium ref</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>H-10a</td><td>ACVP keyGen vector: cryptography seed derives the vector public key</td><td>cryptography 50.0.2 (cross-check only)</td><td>MATCH</td><td>MATCH</td><td>match</td></tr>
+<tr><td>H-10b</td><td>ref HashML-DSA signature verifies via cryptography verify_mu (same mu)</td><td>ref -&gt; cryptography</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+<tr><td>H-10c</td><td>cryptography sign_mu signature verifies via ref verify_internal</td><td>cryptography -&gt; ref</td><td>VALID</td><td>VALID</td><td>match</td></tr>
+</table>
+
+<h2>ACVP known-answer vectors (ML-DSA-44)</h2>
+<table>
+<tr><th>Vector set</th><th>Checked</th><th>Matched</th><th>Mismatched</th></tr>
+<tr><td>sigGen</td><td>10</td><td>10</td><td>0</td></tr>
+<tr><td>sigVer</td><td>15</td><td>15</td><td>0</td></tr>
+<tr><td>keyGen</td><td>25</td><td>25</td><td>0</td></tr>
+</table>
+<p>Note: the ACVP "internalProjection" vectors are projections onto the
+FIPS 204 section 6 internal API — the "message" field is the already
+encoded M' fed to Sign_internal / Verify_internal, not the raw message
+M. See findings F-4.</p>
+
+<h2>Files in this pack</h2>
+<ul>
+<li><code>README.md</code> — this summary, rerun instructions, sources</li>
+<li><code>findings.md</code> — severity-ranked findings F-1–F-6</li>
+<li><code>matrix.md</code> — implementation comparison matrix</li>
+<li><code>index.md</code> — claim-to-evidence index</li>
+<li><code>rubric.md</code> — evidence rubric (15/16)</li>
+<li><code>walkthrough.log</code> — build/run narrative</li>
+<li><code>run_harness.py</code> — main harness (45 cases)</li>
+<li><code>run_kat.py</code> — ACVP KAT validation (50 vectors)</li>
+<li><code>src/ref_mldsa_driver.c</code>, <code>src/build_drivers.sh</code> — reference driver + build</li>
+<li><code>outputs/results.json</code>, <code>outputs/kat_results.json</code> — machine-readable results</li>
+<li><code>outputs/run_harness.log</code>, <code>outputs/run_kat.log</code> — unedited harness logs</li>
+<li><code>outputs/artifacts/*.bin</code> — public keys and signatures per case (secret keys are NOT in the pack)</li>
+<li><code>outputs/SHA256SUMS</code> — digests of the outputs above</li>
+<li><code>outputs/raw/FIPS-204.pdf</code> (.txt) — the standard under test</li>
+</ul>
+
+<h2>Sources</h2>
+<ul>
+<li>FIPS 204: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.204.pdf (DOI 10.6028/NIST.FIPS.204), SHA-256 <code>57239b9f84c03227eda3ca0991204dc7764c79af9ce2e6824eda774918d46b6b</code></li>
+<li>liboqs 0.16.0 / liboqs-python 0.16.0.2: https://github.com/open-quantum-safe/liboqs</li>
+<li>pq-crystals/dilithium, commit <code>d35ba3fe5449bee3e6d43e1f296c3ca818bd36be</code>: https://github.com/pq-crystals/dilithium.git</li>
+<li>pyca/cryptography 50.0.2: https://cryptography.io/ (cross-check only)</li>
+<li>ACVP ML-DSA vectors: liboqs test tree, tests/ACVP_Vectors/ML-DSA-{keyGen,sigGen,sigVer}-FIPS204/internalProjection.json</li>
+</ul>
+</body>
+</html>

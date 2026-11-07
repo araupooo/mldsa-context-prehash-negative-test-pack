@@ -1,0 +1,103 @@
+ML-DSA context-string and HashML-DSA prehash negative-test pack --
+build/run walkthrough
+
+2026-11-07 ~22:47 WIB work started.
+- Layout mirrored from sibling task dirs ../task-7bb5e19b (ML-DSA +
+  SLH-DSA interop pack) and ../task-f96b1267 (ML-KEM timing pack):
+  README.md, findings.md, index.md, matrix.md, rubric.md, src/,
+  outputs/, pack/, repo/, walkthrough.log.
+- RESEARCH FIRST: FIPS 204 fetched from the primary source
+  https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.204.pdf (DOI
+  10.6028/NIST.FIPS.204) into FIPS-204.pdf (SHA-256
+  57239b9f84c03227eda3ca0991204dc7764c79af9ce2e6824eda774918d46b6b),
+  plain text via pdftotext into FIPS-204.txt. Quoted requirements:
+  Alg. 2/3 context <=255 bytes and M' = 0x00||len(ctx)||ctx||M
+  (sections 5.2/5.3); Alg. 4/5 HashML-DSA M' = 0x01||len(ctx)||ctx||
+  OID||PH(M) with the three DER OIDs (section 5.4.1); section 6
+  internal interfaces for CAVP testing; Alg. 7 mu = H(tr||M', 64).
+- Implementation selection (verified from primary sources, not
+  assumed): liboqs 0.16.0 via liboqs-python 0.16.0.2 exposes
+  sign_with_ctx_str/verify_with_ctx_str and NO HashML-DSA API
+  (mechanism list has no Hash names; Signature has no prehash method,
+  is_extmu False). pq-crystals/dilithium reference commit
+  d35ba3fe5449bee3e6d43e1f296c3ca818bd36be (2026-06-03, verified by
+  git rev-parse after a fresh clone; same commit as the sibling pack)
+  exposes ctx via crypto_sign_signature/verify (returns -1 when
+  |ctx| > 255) and HashML-DSA via the section 6 internal entry
+  points crypto_sign_signature_internal/verify_internal, which take
+  an explicit `pre` prefix. pyca/cryptography 50.0.2 (installed in
+  the pack venv) exposes context via sign(data, context=...) and
+  external-mu sign_mu/verify_mu, but no native HashML-DSA API; used
+  ONLY as an independent cross-check (H-10), not as a pinned
+  implementation.
+- Behaviour probes before writing the harness: liboqs sign with a
+  256-byte ctx raises RuntimeError; verify with a 256-byte ctx
+  returns False (no exception, no truncation -- a signature made
+  under a 255-byte ctx does NOT verify under the 255-byte prefix
+  plus one extra byte). cryptography raises ValueError on both paths.
+  A first probe used the wrong liboqs-python argument order
+  (verify_with_ctx_str is (message, signature, context, public_key));
+  corrected before the harness was written.
+- Driver: src/ref_mldsa_driver.c extends the sibling driver with
+  sign_det (deterministic, rnd={0}32), sign_internal/verify_internal
+  (explicit pre + message + rnd), and a 255-byte context-length check
+  that exits 2 with "context too long" on sign/sign_det/verify.
+  First build warned about implicit declarations of the *_internal
+  functions (api.h does not declare them); fixed by including
+  sign.h; rebuilt clean (only the reference tree's own randombytes
+  syscall warning remains, untouched upstream code).
+- Harness: run_harness.py, 45 cases. First full run: 44/45 --
+  one harness bug, not an implementation failure: the NA-3 case
+  mapped the liboqs verify boolean backwards ("INVALID" if True).
+  Fixed the mapping, re-ran: 45/45, RESULT: OK.
+- KAT: run_kat.py against the ACVP vectors copied from the
+  liboqs test tree into src/acvp/ (sha256: sigGen
+  f4004278e7dcf0ddaaad3dcef06dd2445ec8b488e546cc376e1b9bcdfd9802de,
+  sigVer 033a8b8a5f45d7a9b158b493efa5502a1fa697b00ee66037e11d84d5a30ab93a,
+  keyGen 2313cda283d8e7ebd196c04a211c30fd9c471f99ae7e1af844e75683071a4043).
+  First run: sigGen 0/10 MATCH plus a KeyError (sigVer pk/sk live at
+  group level, not per test). Root cause for sigGen: the vectors are
+  projections onto the section 6 internal API -- "message" is the
+  already-encoded M', so sign_internal with an empty prefix and
+  rnd={0}32 reproduces the vector signature byte for byte (verified
+  for tc1 before adopting the reading), while sign_det (Alg. 2) does
+  not. Second run had a second bug: testPassed is a JSON boolean,
+  not the string "True", so every sigVer expectation read False.
+  Fixed both (verify_internal with empty prefix; bool(testPassed));
+  final run: 50/50, RESULT: OK (sigGen 10/10, sigVer 15/15, keyGen
+  25/25).
+- H-13 added after the first green run: a malformed prehash prefix
+  (length byte 0 with a 256-byte context) is silently accepted by
+  the section 6 internal API -- documents the wrapper-discipline
+  footgun (finding F-3). Final harness: 45/45, RESULT: OK.
+- index.html rendered by src/render_index.py directly from
+  outputs/results.json + outputs/kat_results.json, so every number
+  on the page is verbatim from the measurements; verified by
+  src/check_index.py, which checks every case row, the headline
+  counts, and the KAT table against the result files (45 cases +
+  KAT + headers, 0 failures).
+- Clean rerun: bash run_all.sh (rebuild driver, harness, KAT,
+  re-render index.html, check index.html, regenerate
+  outputs/SHA256SUMS, verify with sha256sum -c). First run of
+  run_all.sh failed at the last step only: the digest check ran
+  from the pack root instead of from outputs/ (relative paths in
+  SHA256SUMS). Fixed the path, re-ran: RUN_ALL: OK (45/45 cases,
+  50/50 vectors, all digests OK). Keypairs are generated fresh on
+  every run, so artifact bytes differ between runs; case outcomes
+  must be identical (45/45, 50/50).
+- Secret keys live under outputs/keys/ in the working directory
+  only and are NEVER staged into pack/ or repo/. The pack and repo
+  trees contain public keys and signatures only.
+- Standalone pack test: copied pack/ to /tmp/pack-test, created a
+  fresh venv there, installed liboqs-python 0.16.0.2 + cryptography
+  50.0.2, ran bash run_all.sh. It printed RUN_ALL: OK -- but the
+  run was NOT actually clean: run_harness.py crashed with
+  FileNotFoundError for FIPS-204.pdf (it read the PDF from the pack
+  root, where the staged pack does not keep it) and `set -e` did not
+  catch the failure because the harness output goes through `tee`
+  without `pipefail`, so the script continued on stale staged
+  outputs. Two fixes: run_harness.py now reads
+  outputs/raw/FIPS-204.pdf (falling back to ./FIPS-204.pdf), and
+  run_all.sh now sets `pipefail`. Re-ran the standalone pack test
+  from a fresh copy after the fixes: genuine RUN_ALL: OK (45/45
+  cases, 50/50 vectors, index check 0 failures, all digests OK).
